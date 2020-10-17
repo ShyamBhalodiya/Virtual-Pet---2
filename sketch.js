@@ -1,5 +1,5 @@
 //Create variables here
-var dog, happydog, database, foodStock, foodS, timeno, hour2;
+var dog, happydog, database, foodStock, foodS, foodObj, Nameinput;
 
 function preload() {
   //load images here
@@ -9,56 +9,61 @@ function preload() {
 
 function setup() {
   database = firebase.database();
-  createCanvas(500, 500);
-  dog = createSprite(250, 300, 100, 100);
+  createCanvas(1000, 500);
+
+  //dog
+  dog = createSprite(750, 300, 100, 100);
   dog.scale = 0.3;
   dog.addImage("1", dogimg);
   dog.addImage("2", happydog);
+  dog.debug = true;
 
-  food = createButton("ADD FOOD");
-  food.position(550, 490);
-  food.mousePressed(addfood);
+  //food object
+  foodObj = new Food();
+  foodObj.getfoodstock();
 
-  foodStock = database.ref("/Foodstock");
-  foodStock.on("value", readFoodstock, error);
+  //add food button
+  addfood = createButton("Add Food");
+  addfood.position(750, 500);
+  addfood.mousePressed(() => {
+    foodObj.addfood();
+  });
+
+  //deduct food button
+  Deductfood = createButton("Feed Dog");
+  Deductfood.position(850, 500);
+
+  //input for name
+  Nameinput = new Form();
+  NameObj = new Name();
+  NameObj.getname();
 
 }
 
 function draw() {
   background(0, 255, 0);
-  if (keyWentDown(UP_ARROW)) {
-    writeStock(foodS);
-    dog.changeImage("2");
-  }
-  drawSprites();
-  //add styles here
-  textSize(18);
-  stroke(0);
-  strokeWeight(1);
-  text("Food remaining: " + foodS, 180, 150)
-  text("Note: Press up arrow key to feed dog with milk", 50, 25);
-}
-function readFoodstock(data) {
-  foodS = data.val();
-}
-function writeStock(x) {
-  if (x <= 0) {
-    x = 0;
-  }
-  else {
-    x = x - 1;
-  }
-  database.ref("/").set({
-    Foodstock: x
-  })
-}
-function error() {
-  console.log("Error");
-}
-function addfood() {
-  foodS = foodS + 5;
-  database.ref("/").set({
-    Foodstock: foodS
-  })
-}
 
+  //display methods of food and nameinput
+  foodObj.display();
+  Nameinput.display();
+  NameObj.display();
+
+  //mouse pressed condition
+  Deductfood.mousePressed(() => {
+    dog.changeImage("2");
+    foodObj.deductfood();
+    foodObj.lastfed = hour();
+    database.ref("/").update({
+      Lastfeed: foodObj.lastfed
+    })
+  });
+
+  drawSprites();
+
+  //lastfeed time
+  foodObj.getlastfedtime();
+  foodObj.displaylastfedtime();
+  //text
+  textSize(15);
+  text("Food Stock = " + foodObj.foodstock, 100, 50);
+}
